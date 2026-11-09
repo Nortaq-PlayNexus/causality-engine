@@ -45,3 +45,29 @@ def test_shd():
     for i in range(3): g2.add_node(Node(id=f"X{i}"))
     g2.add_edge(Edge("X1","X0"))
     assert g1.structural_hamming_distance(g2)==2
+
+def test_metrics():
+    from causality_engine.core.metrics import false_discovery_rate, true_positive_rate
+    from causality_engine.core.causal_graph import CausalGraph, Node, Edge
+    t=CausalGraph(); p=CausalGraph()
+    for i in range(3):
+        t.add_node(Node(id=f"X{i}")); p.add_node(Node(id=f"X{i}"))
+    t.add_edge(Edge("X0","X1"))
+    p.add_edge(Edge("X0","X1")); p.add_edge(Edge("X0","X2"))
+    assert false_discovery_rate(p,t)==0.5
+    assert true_positive_rate(p,t)==1.0
+
+def test_negative_control():
+    from causality_engine.core.graph_recovery import score_based_hill_climbing
+    import random
+    rng=random.Random(1)
+    keys=["R0","R1","R2","R3"]
+    data=[{k:rng.gauss(0,1) for k in keys} for _ in range(200)]
+    g=score_based_hill_climbing(data,keys)
+    assert len(g.edges)==0
+
+def test_benchmark_runs():
+    from causality_engine.benchmark.runner import run_all
+    r=run_all()
+    assert "graph_recovery" in r
+    assert "negative_controls" in r
